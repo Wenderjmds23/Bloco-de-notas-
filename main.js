@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const fs = require('fs');
 const path = require('path');
 
 let win;
@@ -8,15 +9,12 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false, 
         }
     });
 
     win.loadFile('index.html');
-
-    win.on('closed', () => {
-        win = null;
-    });
 }
 
 app.whenReady().then(createWindow);
@@ -24,15 +22,40 @@ app.whenReady().then(createWindow);
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
-    }// Esta função envia o caminho da imagem para o frontend via IPC
-ipcMain.handle('get-image-path'), () => {
-    // Caminho do arquivo de imagem
-    const imagePath = path.join(__dirname, 'assets', 'imagem.jpg');
-}
-    // Verifica se o arquivo existe
-    if (fs.existsSync(imagePath)) {
-        return imagePath; // Retorna o caminho da imagem
-    } else {
-        return 'Imagem não encontrada';
     }
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
+});
+
+
+ipcMain.handle('save-file', async (event, content) => {
+    const result = await dialog.showSaveDialog({
+        title: 'Salvar arquivo',
+        defaultPath: path.join(__dirname, 'documento.txt'),
+        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+    });
+
+    if (!result.canceled && result.filePath) {
+        fs.writeFileSync(result.filePath, content);
+        return result.filePath;
+    }
+    return null;
+});
+
+
+ipcMain.handle('open-file', async () => {
+    const result = await dialog.showOpenDialog({
+        title: 'Abrir arquivo',
+        filters: [{ name: 'Text Files', extensions: ['txt'] }],
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        const content = fs.readFileSync(result.filePaths[0], 'utf-8');
+        return content;
+    }
+    return null;
 });
