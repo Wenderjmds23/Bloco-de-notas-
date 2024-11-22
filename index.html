@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloco de Notas</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #13293d;
+        }
+        textarea {
+            width: 100%;
+            height: 80%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            resize: none;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            background-color: #1b98e0;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #247BA0;
+        }
+        h1{
+            color: #e8f1f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bloco de Notas</h1>
+    <textarea id="areaEscrita" placeholder="Escreva algo aqui..."></textarea>
+    <br>
+    <button id="botaoSalvar">Salvar</button>
+    <button id="botaoAbrir">Abrir</button>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        const areaEscrita = document.getElementById('areaEscrita');
+        const botaoSalvar = document.getElementById('botaoSalvar');
+        const openBtn = document.getElementById('botaoAbrir');
+
+        botaoSalvar.addEventListener('click', async () => {
+            const content = areaEscrita.value;
+            const filePath = await ipcRenderer.invoke('save-file', content);
+            if (filePath) {
+                alert(`Arquivo salvo em: ${filePath}`);
+            }
+        });
+
+        botaoAbrir.addEventListener('click', async () => {
+            const content = await ipcRenderer.invoke('open-file');
+            if (content !== null) {
+                areaEscrita.value = content;
+            } else {
+                alert('Nenhum arquivo foi selecionado');
+            }
+        });
+    </script>
+</body>
+</html>
